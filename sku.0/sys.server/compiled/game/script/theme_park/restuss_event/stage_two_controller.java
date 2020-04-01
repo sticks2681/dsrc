@@ -33,27 +33,38 @@ public class stage_two_controller extends script.base_script
     {
         setObjVar(self, "eventStarted", 1);
         String restussEvent = getConfigSetting("EventTeam", "restussEvent");
-        if(restussEvent != null && restussEvent.equals("1") || restussEvent.equals("true")){
+        if(restussEvent != null && (restussEvent.equals("1") || restussEvent.equals("true"))){
             LOG("events", "Restuss Event - Event is on.");
             String phaseVal = getConfigSetting("EventTeam", "restussPhase");
+            doMessageTo("messageTo:broadcastMessage:10:beginEventNotification:0");
             if(phaseVal != null && !phaseVal.equals("")){
                 int phase = Integer.parseInt(phaseVal);
                 if(phase > 2) phase = 2;
                 if(phase < 0) phase = 0;
                 LOG("events", "Restuss Event - Config set to put Restuss into phase " + phaseVal);
                 String progressionOn = getConfigSetting("EventTeam", "restussProgressionOn");
-                if(phase == 1){
-                    // Check if the user wants to progress through stage one or not.  If so, start the cycle.
-                    if(progressionOn != null && !progressionOn.equals("false") || !progressionOn.equals("0")) {
-                        dictionary dict = trial.getSessionDict(self);
-                        dict.put("stage", 3608);
-                        messageTo(self, "spawnNextStage", dict, 0, false);
+                // Check if the user wants to progress through stage one or not.  If so, start the cycle.
+                if(progressionOn != null && (!progressionOn.equals("false") || !progressionOn.equals("0"))) {
+                    dictionary dict = trial.getSessionDict(self);
+                    switch(phase){
+                        case 0:
+                            dict.put("stage", 1);
+                            break;
+                        case 1:
+                            dict.put("stage", 3608);
+                            break;
+                        case 2:
+                            doMessageTo("messageTo:broadcastMessage:10:incrimentPhase:0");
+                            doMessageTo("messageTo:broadcastMessage:10:incrimentPhase:10");
+                            doMessageTo("messageTo:broadcastMessage:10:makePvPArea:15");
+                            break;
                     }
+                    messageTo(self, "spawnNextStage", dict, 0, false);
                 }
             } else {
                 doMessageTo("messageTo:broadcastMessage:10:incrimentPhase:0");
                 doMessageTo("messageTo:broadcastMessage:10:incrimentPhase:10");
-                doMessageTo("messageTo:broadcastMessage:10:makePvPArea:10");
+                doMessageTo("messageTo:broadcastMessage:10:makePvPArea:15");
             }
         } else {
             clearEventArea(self);
@@ -89,13 +100,10 @@ public class stage_two_controller extends script.base_script
         {
             return;
         }
-        for (int i = 0; i < objects.length; i++)
-        {
-            if (objects[i] != self && !isPlayer(objects[i]))
-            {
-                if (trial.isTempObject(objects[i]))
-                {
-                    trial.cleanupObject(objects[i]);
+        for (obj_id object : objects) {
+            if (object != self && !isPlayer(object)) {
+                if (trial.isTempObject(object)) {
+                    trial.cleanupObject(object);
                 }
             }
         }
@@ -147,7 +155,7 @@ public class stage_two_controller extends script.base_script
         int rows = dataTableGetNumRows(restuss_event.STAGE_TWO_DATA);
         if (rows == 0)
         {
-            doLogging("events", "Your table has no rows: " + restuss_event.STAGE_TWO_DATA);
+            doLogging("spawnActors", "Your table has no rows: " + restuss_event.STAGE_TWO_DATA);
             return;
         }
         if (stage == 2)
@@ -291,9 +299,8 @@ public class stage_two_controller extends script.base_script
             return;
         }
         String[] scripts = split(spawnScripts, ';');
-        for (int q = 0; q < scripts.length; q++)
-        {
-            attachScript(subject, scripts[q]);
+        for (String script : scripts) {
+            attachScript(subject, script);
         }
     }
     public void setSpawnObjVar(obj_id newObject, String objvarString) throws InterruptedException
@@ -307,32 +314,26 @@ public class stage_two_controller extends script.base_script
         {
             return;
         }
-        for (int i = 0; i < parse.length; i++)
-        {
-            String[] typeDataSplit = split(parse[i], ':');
+        for (String s : parse) {
+            String[] typeDataSplit = split(s, ':');
             String type = typeDataSplit[0];
             String data = typeDataSplit[1];
             String[] nameValueSplit = split(data, '=');
             String name = nameValueSplit[0];
             String value = nameValueSplit[1];
-            if (type.equals("int"))
-            {
+            if (type.equals("int")) {
                 setObjVar(newObject, name, utils.stringToInt(value));
             }
-            if (type.equals("float"))
-            {
+            if (type.equals("float")) {
                 setObjVar(newObject, name, utils.stringToFloat(value));
             }
-            if (type.equals("string"))
-            {
+            if (type.equals("string")) {
                 setObjVar(newObject, name, value);
             }
-            if (type.equals("boolean") && (value.equals("true") || value.equals("1")))
-            {
+            if (type.equals("boolean") && (value.equals("true") || value.equals("1"))) {
                 setObjVar(newObject, name, true);
             }
-            if (type.equals("boolean") && (value.equals("false") || value.equals("0")))
-            {
+            if (type.equals("boolean") && (value.equals("false") || value.equals("0"))) {
                 setObjVar(newObject, name, false);
             }
         }
@@ -433,9 +434,8 @@ public class stage_two_controller extends script.base_script
         {
             return;
         }
-        for (int r = 0; r < players.length; r++)
-        {
-            playMusic(players[r], parse[1]);
+        for (obj_id player : players) {
+            playMusic(player, parse[1]);
         }
     }
     public int OnInitialize(obj_id self) throws InterruptedException

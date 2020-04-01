@@ -74,12 +74,14 @@ public class retrieve_item_on_item extends script.base_script
     }
     public int OnObjectMenuSelect(obj_id self, obj_id player, int item) throws InterruptedException
     {
-        location here = getLocation(player);
-        location term = getLocation(self);
-        float dist = getDistance(here, term);
         if (item == menu_info_types.ITEM_USE || item == menu_info_types.CONVERSE_START)
         {
-            if (isDead(player) || isIncapacitated(player) || dist > 5.0)
+            float maxUseDistance = hasObjVar(self, "maxUseDistance") ? getFloatObjVar(self, "maxUseDistance") : 5.0f;
+
+            location here = getLocation(player);
+            location term = getLocation(self);
+            float dist = getDistance(here, term);
+            if (isDead(player) || isIncapacitated(player) || dist > maxUseDistance)
             {
                 return SCRIPT_CONTINUE;
             }
@@ -126,13 +128,10 @@ public class retrieve_item_on_item extends script.base_script
                             String questCrcString = (String)keys.nextElement();
                             int questCrc = utils.stringToInt(questCrcString);
                             int[] tasksForCurrentQuest = tasks.getIntArray(questCrcString);
-                            for (int i = 0; i < tasksForCurrentQuest.length; ++i)
-                            {
-                                int taskId = tasksForCurrentQuest[i];
+                            for (int taskId : tasksForCurrentQuest) {
                                 String baseObjVar = groundquests.getBaseObjVar(player, "retrieve_item", questGetQuestName(questCrc), taskId);
                                 String retrieveTemplateName = groundquests.getTaskStringDataEntry(questCrc, taskId, "SERVER_TEMPLATE");
-                                if (itemTemplateName.equals(retrieveTemplateName))
-                                {
+                                if (itemTemplateName.equals(retrieveTemplateName)) {
                                     sendSystemMessage(player, new string_id("quest/groundquests", "retrieve_item_already_used"));
                                     return SCRIPT_CONTINUE;
                                 }

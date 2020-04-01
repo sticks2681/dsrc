@@ -3,6 +3,7 @@ package script.library;
 import script.*;
 
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Vector;
 
 public class space_dungeon extends script.base_script
@@ -116,6 +117,7 @@ public class space_dungeon extends script.base_script
         String name = getDungeonInstanceName(dungeon);
         String buildout_area = locations.getBuildoutAreaName(dungeon);
         int buildout_row = locations.getBuildoutAreaRow(dungeon);
+        LOG("space_dungeon", "Setting objvars on dungeon controller.  BuildoutArea = " + buildout_area + ", BuildoutRow = " + buildout_row);
         setObjVar(dungeon, VAR_BUILDOUT_AREA, buildout_area);
         setObjVar(dungeon, VAR_BUILDOUT_ROW, buildout_row);
         messageTo(dungeon, "dungeonCleanup", null, 0, false);
@@ -441,20 +443,15 @@ public class space_dungeon extends script.base_script
         valid_tickets.setSize(0);
         if (inv_contents != null)
         {
-            for (int i = 0; i < inv_contents.length; i++)
-            {
-                if (hasObjVar(inv_contents[i], VAR_TICKET_ROOT))
-                {
-                    String ticket_point = getTicketPointName(inv_contents[i]);
-                    if (ticket_point != null && ticket_point.equals(collector_point))
-                    {
-                        String ticket_planet = getTicketPlanetName(inv_contents[i]);
-                        if (ticket_planet != null && ticket_planet.equals(collector_planet))
-                        {
-                            String ticket_dungeon = getTicketDungeonName(inv_contents[i]);
-                            if (ticket_dungeon != null && ticket_dungeon.equals(collector_dungeon))
-                            {
-                                utils.addElement(valid_tickets, inv_contents[i]);
+            for (obj_id inv_content : inv_contents) {
+                if (hasObjVar(inv_content, VAR_TICKET_ROOT)) {
+                    String ticket_point = getTicketPointName(inv_content);
+                    if (ticket_point != null && ticket_point.equals(collector_point)) {
+                        String ticket_planet = getTicketPlanetName(inv_content);
+                        if (ticket_planet != null && ticket_planet.equals(collector_planet)) {
+                            String ticket_dungeon = getTicketDungeonName(inv_content);
+                            if (ticket_dungeon != null && ticket_dungeon.equals(collector_dungeon)) {
+                                utils.addElement(valid_tickets, inv_content);
                             }
                         }
                     }
@@ -486,20 +483,14 @@ public class space_dungeon extends script.base_script
         location loc = getLocation(player);
         float maxTicketCollectorDistance = isSpaceScene() ? MAXIMUM_TICKET_COLLECTOR_DISTANCE_SPACE : MAXIMUM_TICKET_COLLECTOR_DISTANCE_GROUND;
         obj_id[] items = getObjectsInRange(loc, maxTicketCollectorDistance);
-        for (int i = 0; i < items.length; i++)
-        {
-            if (hasScript(items[i], TRAVEL_DUNGEON))
-            {
-                if (point_name == null)
-                {
-                    return items[i];
-                }
-                else 
-                {
-                    String collector_point = getTicketPointName(items[i]);
-                    if ((collector_point != null) && collector_point.equals(point_name))
-                    {
-                        return items[i];
+        for (obj_id item : items) {
+            if (hasScript(item, TRAVEL_DUNGEON)) {
+                if (point_name == null) {
+                    return item;
+                } else {
+                    String collector_point = getTicketPointName(item);
+                    if ((collector_point != null) && collector_point.equals(point_name)) {
+                        return item;
                     }
                 }
             }
@@ -585,14 +576,7 @@ public class space_dungeon extends script.base_script
         if (request_id < 1)
         {
             string_id fail = space_dungeon_data.getDungeonFailureString(dungeon_name);
-            if (fail != null)
-            {
-                sendSystemMessage(player, fail);
-            }
-            else 
-            {
-                sendSystemMessage(player, SID_UNABLE_TO_FIND_DUNGEON);
-            }
+            sendSystemMessage(player, Objects.requireNonNullElse(fail, SID_UNABLE_TO_FIND_DUNGEON));
             return false;
         }
         setObjVar(player, VAR_TICKET_USED, ticket);
@@ -625,14 +609,7 @@ public class space_dungeon extends script.base_script
         if (request_id < 1)
         {
             string_id fail = space_dungeon_data.getDungeonFailureString(dungeon_name);
-            if (fail != null)
-            {
-                sendSystemMessage(player, fail);
-            }
-            else 
-            {
-                sendSystemMessage(player, SID_UNABLE_TO_FIND_DUNGEON);
-            }
+            sendSystemMessage(player, Objects.requireNonNullElse(fail, SID_UNABLE_TO_FIND_DUNGEON));
             return false;
         }
         setObjVar(player, VAR_TICKET_USED, player);
@@ -661,14 +638,7 @@ public class space_dungeon extends script.base_script
         if (request_id < 1)
         {
             string_id fail = space_dungeon_data.getDungeonFailureString(dungeon_name);
-            if (fail != null)
-            {
-                sendSystemMessage(player, fail);
-            }
-            else 
-            {
-                sendSystemMessage(player, SID_UNABLE_TO_FIND_DUNGEON);
-            }
+            sendSystemMessage(player, Objects.requireNonNullElse(fail, SID_UNABLE_TO_FIND_DUNGEON));
             return false;
         }
         location start_loc = space_dungeon_data.getDungeonStartLocation(dungeon_name);
@@ -765,11 +735,9 @@ public class space_dungeon extends script.base_script
             {
                 LOG("space_dungeon", "space_dungeon.movePlayerToDungeon [" + player + "] moving <= [" + passengers.size() + "] passengers.");
                 setObjVar(player, VAR_PASSENGER_IDS, passengers);
-                for (Iterator it = passengers.iterator(); it.hasNext(); )
-                {
-                    obj_id passenger = (obj_id)it.next();
-                    if (!player.equals(passenger))
-                    {
+                for (Object passenger1 : passengers) {
+                    obj_id passenger = (obj_id) passenger1;
+                    if (!player.equals(passenger)) {
                         setObjVar(passenger, VAR_PILOT_ID, player);
                         setObjVar(passenger, VAR_SESSION_ID, session_id);
                         prose_package ppPilotLanding = prose.getPackage(SID_PILOT_LANDING_AT_DUNGEON);
@@ -787,40 +755,32 @@ public class space_dungeon extends script.base_script
             obj_id[] group_members = getGroupMemberIds(group);
             if (group_members != null && group_members.length > 0)
             {
-                for (int i = 0; i < group_members.length; i++)
-                {
-                    if (!player.equals(group_members[i]))
-                    {
-                        if (group_members[i].isAuthoritative())
-                        {
-                            if (isSpaceScene)
-                            {
-                                if (playerPilotedShip.equals(getTopMostContainer(group_members[i])))
-                                {
+                for (obj_id group_member : group_members) {
+                    if (!player.equals(group_member)) {
+                        if (group_member.isAuthoritative()) {
+                            if (isSpaceScene) {
+                                if (playerPilotedShip.equals(getTopMostContainer(group_member))) {
                                     continue;
                                 }
-                                if (null == getPilotedShip(group_members[i]))
-                                {
+                                if (null == getPilotedShip(group_member)) {
                                     continue;
                                 }
                             }
-                            if (!utils.hasScriptVar(group_members[i], SCRIPT_VAR_DUNGEON_PENDING))
-                            {
-                                if (playerLocation.distance(getLocation(group_members[i])) <= maxTravelGroupDistance)
-                                {
-                                    utils.setScriptVar(group_members[i], SCRIPT_VAR_DUNGEON_PENDING, dungeon_name);
-                                    utils.setScriptVar(group_members[i], SCRIPT_VAR_DUNGEON_ID_PENDING, dungeon);
-                                    setObjVar(group_members[i], VAR_SESSION_ID, session_id);
-                                    utils.setScriptVar(group_members[i], SCRIPT_VAR_DUNGEON_POSITION, dungeon_position);
+                            if (!utils.hasScriptVar(group_member, SCRIPT_VAR_DUNGEON_PENDING)) {
+                                if (playerLocation.distance(getLocation(group_member)) <= maxTravelGroupDistance) {
+                                    utils.setScriptVar(group_member, SCRIPT_VAR_DUNGEON_PENDING, dungeon_name);
+                                    utils.setScriptVar(group_member, SCRIPT_VAR_DUNGEON_ID_PENDING, dungeon);
+                                    setObjVar(group_member, VAR_SESSION_ID, session_id);
+                                    utils.setScriptVar(group_member, SCRIPT_VAR_DUNGEON_POSITION, dungeon_position);
                                     String dungeon_name_local = localize(getDungeonNameStringId(dungeon_name));
                                     prose_package ppAuthToTravel = prose.getPackage(SID_AUTH_TO_TRAVEL_OFFER);
                                     prose.setTT(ppAuthToTravel, player);
                                     prose.setTO(ppAuthToTravel, dungeon_name_local);
                                     String prompt = " \0" + packOutOfBandProsePackage(null, ppAuthToTravel);
-                                    int pid = sui.msgbox(group_members[i], group_members[i], prompt, sui.YES_NO, "msgDungeonTravelConfirmed");
+                                    int pid = sui.msgbox(group_member, group_member, prompt, sui.YES_NO, "msgDungeonTravelConfirmed");
                                     dictionary d = new dictionary();
                                     d.put("pid", pid);
-                                    messageTo(group_members[i], "msgCloseDungeonTravel", d, 30.0f, false);
+                                    messageTo(group_member, "msgCloseDungeonTravel", d, 30.0f, false);
                                 }
                             }
                         }
@@ -831,22 +791,17 @@ public class space_dungeon extends script.base_script
         moveSinglePlayerIntoDungeon(player, dungeon, dungeon_name, dungeon_position);
         return true;
     }
-    public static void moveSinglePlayerIntoDungeon(obj_id player, obj_id dungeon, String dungeon_name, location dungeon_position) throws InterruptedException
-    {
-        if (!isDungeonLockoutTimerExpired(player, dungeon_name))
-        {
+    public static void moveSinglePlayerIntoDungeon(obj_id player, obj_id dungeon, String dungeon_name, location dungeon_position) throws InterruptedException {
+        if (!isDungeonLockoutTimerExpired(player, dungeon_name)) {
             displayDungeonLockoutTimerSUI(player, dungeon_name);
             return;
         }
         LOG("space_dungeon", "space_dungeon.moveSinglePlayerIntoDungeon [" + player + "] -> [" + dungeon + "].");
         boolean isSpaceScene = isSpaceScene();
-        if (isSpaceScene)
-        {
-            if (!hasObjVar(player, VAR_PILOT_ID))
-            {
+        if (isSpaceScene) {
+            if (!hasObjVar(player, VAR_PILOT_ID)) {
                 obj_id playerPilotedShip = isSpaceScene ? getPilotedShip(player) : null;
-                if (null != playerPilotedShip)
-                {
+                if (null != playerPilotedShip) {
                     location shipPreviousLocation = getLocation(playerPilotedShip);
                     setObjVar(player, VAR_PILOT_ID, player);
                     setObjVar(player, VAR_PILOT_SHIP_ID, playerPilotedShip);
@@ -857,14 +812,20 @@ public class space_dungeon extends script.base_script
         }
         location start_loc = space_dungeon_data.getDungeonStartLocationRandomized(dungeon_name);
         String start_cell = space_dungeon_data.getDungeonStartCellName(dungeon_name);
-        LOG("space_dungeon", "space_dungeon.movePlayerGroupToDungeon: area ->" + dungeon_position.area + " " + dungeon_position.x + "/" + dungeon_position.y + "/" + dungeon_position.z + " " + start_loc.x + "/" + start_loc.y + "/" + start_loc.z + " (" + start_cell + ")");
+        LOG("space_dungeon", "space_dungeon.moveSinglePlayerIntoDungeon: area ->" + dungeon_position.area + " " + dungeon_position.x + "/" + dungeon_position.y + "/" + dungeon_position.z + " " + start_loc.x + "/" + start_loc.y + "/" + start_loc.z + " (" + start_cell + ")");
         setObjVar(player, VAR_DUNGEON_ID, dungeon);
+        setObjVar(player, VAR_BUILDOUT_AREA, locations.getBuildoutAreaName(dungeon_position));
+        setObjVar(player, VAR_BUILDOUT_ROW, locations.getBuildoutAreaRow(dungeon_position));
+
         utils.dismountRiderJetpackCheck(player);
         callable.storeCallables(player);
+
         dictionary dict = new dictionary();
         dict.put(PLAYER_ID, player);
-        messageTo(dungeon, "addPlayerToParticipantIdList", dict, 0, false);
+        messageTo(dungeon, "addPlayerToParticipantIdList", dict, 0.0f, false);
+
         setInstanceControllerIdOnPlayer(player, dungeon);
+
         if (start_cell.equals(""))
         {
             vector post = new vector(dungeon_position.x + start_loc.x, dungeon_position.y + start_loc.y, dungeon_position.z + start_loc.z);
@@ -891,6 +852,7 @@ public class space_dungeon extends script.base_script
         obj_id dungeon = findValidDungeonForEject(player);
         if (dungeon == null)
         {
+            LOG("space_dungeon", "space_dungeon.ejectPlayerFromDungeon -- could not find a valid dungeon for player");
             performEmergencyEject(player);
             return true;
         }
@@ -1074,11 +1036,9 @@ public class space_dungeon extends script.base_script
         String[] dungeonScriptList = dataTableGetStringColumn(space_dungeon_data.DUNGEON_DATATABLE, "player_script");
         if (dungeonScriptList != null && dungeonScriptList.length > 0)
         {
-            for (int i = 0; i < dungeonScriptList.length; i++)
-            {
-                if (hasScript(player, dungeonScriptList[i]))
-                {
-                    detachScript(player, dungeonScriptList[i]);
+            for (String s : dungeonScriptList) {
+                if (hasScript(player, s)) {
+                    detachScript(player, s);
                 }
             }
         }
@@ -1156,11 +1116,9 @@ public class space_dungeon extends script.base_script
             if (pilot.equals(player))
             {
                 Vector passengers = getResizeableObjIdArrayObjVar(pilot, VAR_PASSENGER_IDS);
-                for (Iterator it = passengers.iterator(); it.hasNext(); )
-                {
-                    obj_id passenger = (obj_id)it.next();
-                    if (!pilot.equals(passenger))
-                    {
+                for (Object passenger1 : passengers) {
+                    obj_id passenger = (obj_id) passenger1;
+                    if (!pilot.equals(passenger)) {
                         prose_package ppPilotEjected = prose.getPackage(SID_YOUR_PILOT_EJECTED);
                         prose.setTT(ppPilotEjected, pilot);
                         sendSystemMessageProse(passenger, ppPilotEjected);
@@ -1236,22 +1194,18 @@ public class space_dungeon extends script.base_script
         else 
         {
             LOG("space_dungeon", "space_dungeon.handlePilotLaunch -- player [" + player + "] has [" + passengers.size() + "] potential passengers");
-            for (Iterator it = passengers.iterator(); it.hasNext(); )
-            {
-                obj_id passenger = (obj_id)it.next();
-                if (!isIdValid(passenger))
-                {
+            for (Object passenger1 : passengers) {
+                obj_id passenger = (obj_id) passenger1;
+                if (!isIdValid(passenger)) {
                     sendSystemMessage(pilot, SID_PASSENGER_NO_LONGER_WITH_YOU);
                     continue;
                 }
-                if (passenger.equals(pilot))
-                {
+                if (passenger.equals(pilot)) {
                     continue;
                 }
                 location passengerLocation = getLocation(passenger);
                 float distanceToPilot = pilotLocation.distance(passengerLocation);
-                if (distanceToPilot > 16.0f)
-                {
+                if (distanceToPilot > 16.0f) {
                     sendSystemMessage(passenger, SID_PILOT_LAUNCHED_WITHOUT_YOU);
                     removeObjVar(passenger, VAR_PILOT_ID);
                     prose_package ppLeftBehind = prose.getPackage(SID_PASSENGER_LEFT_BEHIND);
@@ -1260,25 +1214,19 @@ public class space_dungeon extends script.base_script
                     continue;
                 }
                 obj_id passengerDungeon = findValidDungeonForEject(passenger);
-                if (dungeon != passengerDungeon)
-                {
+                if (dungeon != passengerDungeon) {
                     LOG("space_dungeon", "space_dungeon.handlePilotLaunch -- passenger [" + passenger + "] is not in the same dungeon as pilot");
                     prose_package ppCannotCome = prose.getPackage(SID_PASSENGER_CANNOT_COME);
                     prose.setTT(ppCannotCome, passenger);
                     sendSystemMessageProse(pilot, ppCannotCome);
-                }
-                else 
-                {
+                } else {
                     obj_id passengerPilotId = getObjIdObjVar(passenger, VAR_PILOT_ID);
-                    if (passengerPilotId != player)
-                    {
+                    if (passengerPilotId != player) {
                         LOG("space_dungeon", "space_dungeon.handlePilotLaunch -- passenger [" + passenger + "] pilot mismatch");
                         prose_package ppNotPilot = prose.getPackage(SID_DOESNT_THINK_YOUR_A_PILOT);
                         prose.setTT(ppNotPilot, passenger);
                         sendSystemMessageProse(pilot, ppNotPilot);
-                    }
-                    else 
-                    {
+                    } else {
                         prose_package ppNowBoardingPass = prose.getPackage(SID_NOW_BOARDING_PASSENGER);
                         prose.setTT(ppNowBoardingPass, passenger);
                         sendSystemMessageProse(pilot, ppNowBoardingPass);
@@ -1288,8 +1236,7 @@ public class space_dungeon extends script.base_script
                         boolean wasValidatedForDungeon = deValidatePlayerForDungeon(passenger, dungeon);
                         LOG("space_dungeon", "space_dungeon.handlePilotLaunch -- passenger [" + passenger + "] was validated [" + wasValidatedForDungeon + "] for this dungeon");
                         removePlayerScriptsForDungeon(passenger, dungeon);
-                        if (wasValidatedForDungeon)
-                        {
+                        if (wasValidatedForDungeon) {
                             decrementDungeonParticipantCounter(dungeon, player);
                         }
                         removeObjVar(passenger, VAR_PILOT_ID);
@@ -1358,12 +1305,10 @@ public class space_dungeon extends script.base_script
         obj_id[] players = getParticipantIds(dungeon);
         if (players != null && players.length > 0)
         {
-            for (int i = 0; i < players.length; i++)
-            {
-                if (exists(players[i]))
-                {
-                    sendSystemMessage(players[i], SID_SESSION_TIME_ENDED);
-                    ejectPlayerFromDungeon(players[i]);
+            for (obj_id player : players) {
+                if (exists(player)) {
+                    sendSystemMessage(player, SID_SESSION_TIME_ENDED);
+                    ejectPlayerFromDungeon(player);
                 }
             }
         }
@@ -1380,7 +1325,7 @@ public class space_dungeon extends script.base_script
         obj_id top = getTopMostContainer(player);
         String template = getTemplateName(top);
         boolean isCorvette = false;
-        if (template.indexOf("dungeon_corellian_corvette") > -1)
+        if (template.contains("dungeon_corellian_corvette"))
         {
             isCorvette = true;
         }
@@ -1390,6 +1335,7 @@ public class space_dungeon extends script.base_script
         obj_id dungeon = findValidDungeonForEject(player);
         if (!dataTableOpen(buildout_table) && !isCorvette)
         {
+            LOG("space_dungeon", "Could not open buildout table (" + buildout_table + ") and we're not the corvette for player (" + player + ") so devalidating.");
             deValidatePlayerForDungeon(player, dungeon);
             return false;
         }
@@ -1398,23 +1344,27 @@ public class space_dungeon extends script.base_script
         String player_saved_area = getStringObjVar(player, VAR_BUILDOUT_AREA);
         if (area_name == null && !isCorvette)
         {
+            LOG("space_dungeon", "Could not get area name and we're not the corvette for player (" + player + ") so devalidating");
             deValidatePlayerForDungeon(player, dungeon);
             return false;
         }
         int dungeon_row = dataTableSearchColumnForString(area_name, "dungeon_area", space_dungeon_data.DUNGEON_DATATABLE);
         if (dungeon_row == -1 && !isCorvette)
         {
+            LOG("space_dungeon", "Could not get dungeon row and we're not the corvette for player (" + player + ") so devalidating");
             deValidatePlayerForDungeon(player, dungeon);
             return false;
         }
         if ((player_saved_area == null || player_saved_area.equals("")) && dungeon_row > -1 && !isCorvette)
         {
+            LOG("space_dungeon", "Could not find Player Saved Area, but did find the dungeon row (" + dungeon_row + ") and we're not the corvette for player (" + player + ") so EJECTING");
             ejectPlayerFromDungeon(player);
             return false;
         }
         String dungeon_area = dataTableGetString(space_dungeon_data.DUNGEON_DATATABLE, dungeon_row, "dungeon_area");
         if ((player_saved_area != null && !player_saved_area.equals("")) && (!player_saved_area.equals(area_name)) && (!player_saved_area.equals(dungeon_area)) && !isCorvette)
         {
+            LOG("space_dungeon", "Found player saved area ("+player_saved_area+"), but it doesn't match our current area ("+area_name+") PLUS, we're not the corvette for player (" + player + ") so EJECTING");
             ejectPlayerFromDungeon(player);
             return false;
         }
@@ -1424,6 +1374,7 @@ public class space_dungeon extends script.base_script
             int locationRow = locations.getBuildoutAreaRow(player);
             if (playerBuildoutRow != locationRow)
             {
+                LOG("space_dungeon", "Player buildout row ("+playerBuildoutRow+")doesn't match the location row ("+locationRow+") - for player (" + player + ") so EJECTING");
                 ejectPlayerFromDungeon(player);
                 return false;
             }
@@ -1431,6 +1382,7 @@ public class space_dungeon extends script.base_script
         obj_id dungeonController = getDungeonIdForPlayer(player);
         if (!isIdValid(dungeonController) || !exists(dungeonController) || !hasScript(dungeonController, "theme_park.dungeon.space_dungeon_controller"))
         {
+            LOG("space_dungeon", "Couldn't identify the dungeon controller for the instance or it doesn't have the controller script for controller (" + dungeonController + ") so EJECTING");
             ejectPlayerFromDungeon(player);
             return false;
         }
@@ -1438,6 +1390,7 @@ public class space_dungeon extends script.base_script
         int player_session_id = space_dungeon.getDungeonSessionId(player);
         if (dungeon_session_id == -1 || dungeon_session_id != player_session_id)
         {
+            LOG("space_dungeon", "Dungeon Session ID ("+dungeon_session_id+") does not match Player Session ID ("+player_session_id+") for player (" + player + ") so EJECTING");
             ejectPlayerFromDungeon(player);
             return false;
         }
@@ -1491,9 +1444,8 @@ public class space_dungeon extends script.base_script
         {
             return;
         }
-        for (int r = 0; r < players.length; r++)
-        {
-            playMusic(players[r], sound);
+        for (obj_id player : players) {
+            playMusic(player, sound);
         }
     }
     public static void sendInstanceSystemMessage(obj_id dungeon, string_id message) throws InterruptedException
@@ -1663,12 +1615,9 @@ public class space_dungeon extends script.base_script
         obj_id[] players = getPlayerCreaturesInRange(controller, 32000);
         if (players != null && players.length > 0)
         {
-            for (int i = 0; i < players.length; i++)
-            {
-                if (hasObjVar(players[i], INSTANCE_ID))
-                {
-                    if (getObjIdObjVar(players[i], INSTANCE_ID) == controller)
-                    {
+            for (obj_id player : players) {
+                if (hasObjVar(player, INSTANCE_ID)) {
+                    if (getObjIdObjVar(player, INSTANCE_ID) == controller) {
                         numberOfPlayers++;
                     }
                 }
@@ -1683,13 +1632,10 @@ public class space_dungeon extends script.base_script
         obj_id[] players = getPlayerCreaturesInRange(controller, 32000);
         if (players != null && players.length > 0)
         {
-            for (int i = 0; i < players.length; i++)
-            {
-                if (hasObjVar(players[i], INSTANCE_ID))
-                {
-                    if (getObjIdObjVar(players[i], INSTANCE_ID) == controller)
-                    {
-                        playersInInstance = utils.addElement(playersInInstance, players[i]);
+            for (obj_id player : players) {
+                if (hasObjVar(player, INSTANCE_ID)) {
+                    if (getObjIdObjVar(player, INSTANCE_ID) == controller) {
+                        playersInInstance = utils.addElement(playersInInstance, player);
                     }
                 }
             }
@@ -1734,9 +1680,8 @@ public class space_dungeon extends script.base_script
         {
             return;
         }
-        for (int i = 0; i < players.length; i++)
-        {
-            setDungeonLockoutTimer(players[i], dungeon);
+        for (obj_id player : players) {
+            setDungeonLockoutTimer(player, dungeon);
         }
     }
     public static void setDungeonLockoutTimer(obj_id[] players, obj_id dungeon, int time) throws InterruptedException
@@ -1745,9 +1690,8 @@ public class space_dungeon extends script.base_script
         {
             return;
         }
-        for (int i = 0; i < players.length; i++)
-        {
-            setDungeonLockoutTimer(players[i], dungeon, time);
+        for (obj_id player : players) {
+            setDungeonLockoutTimer(player, dungeon, time);
         }
     }
     public static void setDungeonLockoutTimer(obj_id dungeon) throws InterruptedException
@@ -1800,11 +1744,9 @@ public class space_dungeon extends script.base_script
         {
             return;
         }
-        for (int i = 0; i < players.length; i++)
-        {
-            if (isIdValid(players[i]))
-            {
-                addToDungeonLockoutTimer(players[i], dungeon, time);
+        for (obj_id player : players) {
+            if (isIdValid(player)) {
+                addToDungeonLockoutTimer(player, dungeon, time);
             }
         }
     }
@@ -1879,10 +1821,8 @@ public class space_dungeon extends script.base_script
             return false;
         }
         String dungeonName = getDungeonName(dungeon);
-        for (int i = 0; i < players.length; i++)
-        {
-            if (!validateInstanceTimerForPlayer(players[i], dungeonName))
-            {
+        for (obj_id player : players) {
+            if (!validateInstanceTimerForPlayer(player, dungeonName)) {
                 return false;
             }
         }
@@ -1935,20 +1875,17 @@ public class space_dungeon extends script.base_script
         Vector dungeonLocks = new Vector();
         dungeonLocks.setSize(0);
         String[] validDungeons = dataTableGetStringColumn(space_dungeon_data.DUNGEON_DATATABLE, 0);
-        for (int i = 0; i < validDungeons.length; i++)
-        {
-            if (hasObjVar(player, LIST_DUNGEON_LOCKOUT + validDungeons[i]))
-            {
-                utils.addElement(dungeonLocks, validDungeons[i]);
+        for (String validDungeon : validDungeons) {
+            if (hasObjVar(player, LIST_DUNGEON_LOCKOUT + validDungeon)) {
+                utils.addElement(dungeonLocks, validDungeon);
             }
         }
         if (dungeonLocks == null || dungeonLocks.size() == 0)
         {
             return;
         }
-        for (int k = 0; k < dungeonLocks.size(); k++)
-        {
-            clearDungeonLockoutTimer(player, ((String)dungeonLocks.get(k)));
+        for (Object dungeonLock : dungeonLocks) {
+            clearDungeonLockoutTimer(player, ((String) dungeonLock));
         }
     }
     public static void clearAllDungeonLockoutTimers(obj_id[] players) throws InterruptedException
@@ -1957,9 +1894,8 @@ public class space_dungeon extends script.base_script
         {
             return;
         }
-        for (int i = 0; i < players.length; i++)
-        {
-            clearAllDungeonLockoutTimers(players[i]);
+        for (obj_id player : players) {
+            clearAllDungeonLockoutTimers(player);
         }
     }
     public static void displayDungeonLockoutTimerSUI(obj_id player, String dungeonName) throws InterruptedException
@@ -2004,9 +1940,8 @@ public class space_dungeon extends script.base_script
         {
             return;
         }
-        for (int i = 0; i < players.length; i++)
-        {
-            sui.listbox(players[i], players[i], body, sui.OK_ONLY, title, invalidPlayers, "noHandle", true);
+        for (obj_id player : players) {
+            sui.listbox(player, player, body, sui.OK_ONLY, title, invalidPlayers, "noHandle", true);
         }
     }
     public static String[] getTimeLockedPlayers(obj_id[] players, String dungeonName) throws InterruptedException
@@ -2017,11 +1952,9 @@ public class space_dungeon extends script.base_script
         }
         Vector lockedPlayers = new Vector();
         lockedPlayers.setSize(0);
-        for (int i = 0; i < players.length; i++)
-        {
-            if (!validateInstanceTimerForPlayer(players[i], dungeonName))
-            {
-                utils.addElement(lockedPlayers, players[i]);
+        for (obj_id player : players) {
+            if (!validateInstanceTimerForPlayer(player, dungeonName)) {
+                utils.addElement(lockedPlayers, player);
             }
         }
         if (lockedPlayers == null || lockedPlayers.size() == 0)
@@ -2040,11 +1973,9 @@ public class space_dungeon extends script.base_script
         String[] allDungeons = dataTableGetStringColumn(space_dungeon_data.DUNGEON_DATATABLE, 0);
         Vector hasDungeons = new Vector();
         hasDungeons.setSize(0);
-        for (int i = 0; i < allDungeons.length; i++)
-        {
-            if (hasObjVar(player, LIST_DUNGEON_LOCKOUT + allDungeons[i]))
-            {
-                utils.addElement(hasDungeons, allDungeons[i]);
+        for (String allDungeon : allDungeons) {
+            if (hasObjVar(player, LIST_DUNGEON_LOCKOUT + allDungeon)) {
+                utils.addElement(hasDungeons, allDungeon);
             }
         }
         if (hasDungeons == null || hasDungeons.size() == 0)

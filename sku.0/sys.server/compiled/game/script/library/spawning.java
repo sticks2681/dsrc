@@ -63,13 +63,15 @@ public class spawning extends script.base_script
     }
     public static void addToSpawnDebugList(obj_id self, obj_id spawned) throws InterruptedException
     {
-        Vector debugSpawnList = new Vector();
-        debugSpawnList.setSize(0);
+        if(!utils.inDebugMode()) return;
+        Vector debugSpawnList;
         if (utils.hasScriptVar(self, "debugSpawnList"))
         {
             debugSpawnList = utils.getResizeableObjIdArrayScriptVar(self, "debugSpawnList");
+            debugSpawnList = utils.addElement(debugSpawnList, spawned);
+        } else {
+            debugSpawnList = utils.addElement(new Vector(), spawned);
         }
-        debugSpawnList = utils.addElement(debugSpawnList, spawned);
         utils.setScriptVar(self, "debugSpawnList", debugSpawnList);
     }
     public static Vector getAllObjectsWithObjVar(location locTest, String strObjVarName) throws InterruptedException
@@ -169,7 +171,7 @@ public class spawning extends script.base_script
             return null;
         }
         setObjVar(creature, "dungeon", dungeon);
-        create.addDestroyMessage(creature, creatureName + "Dead", 300f, dungeon);
+        create.addDestroyMessage(creature, creatureName + "Dead", 300.0f, dungeon);
         return creature;
     }
     public static boolean spawnObjectsInDungeonFromTable(obj_id dungeon, String planet, String table) throws InterruptedException
