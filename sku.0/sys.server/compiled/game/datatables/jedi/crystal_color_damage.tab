@@ -24,7 +24,7 @@ i	"e(none=0,cold=64,heat=32,acid=128,electric=256)[none]"	f	c
 21	cold	0.04	Mundi's Response
 22	cold	0.04	Strength of Luminaria
 23	cold	0.04	Baas's Wisdom
-24	electric	0.04	Quintessence of the Force
+24	acid	0.10	Quintessence of the Force
 25	acid	0.04	Dawn of Dagobah
 26	electric	0.04	Horn's Future
 27	acid	0.04	Allya's Redemption
